@@ -1,46 +1,44 @@
 import cv2
-import mediapipe as mp
 import json
 import os
+import mediapipe as mp
 
 class PoseExtractor:
     def __init__(self):
+        # Direct access to the solution
         self.mp_pose = mp.solutions.pose
-        self.pose = self.mp_pose.Pose(
+        self.pose_tracker = self.mp_pose.Pose(
             static_image_mode=False,
             model_complexity=1,
-            min_detection_confidence=0.5
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
         )
 
-    def extract_from_video(self, video_path: str, output_path: str):
+    def extract_pose(self, video_path, output_json_path):
         if not os.path.exists(video_path):
-            return {"error": f"Video not found at {video_path}"}
+            return False
 
         cap = cv2.VideoCapture(video_path)
-        all_frames = []
+        all_frames_data = []
+        frame_idx = 0
 
         while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
+            success, frame = cap.read()
+            if not success:
                 break
 
-            # Convert to RGB for MediaPipe
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = self.pose.process(rgb_frame)
+            results = self.pose_tracker.process(rgb_frame)
 
             if results.pose_landmarks:
-                # Extract 33 landmarks: x, y, z (depth), and visibility
-                landmarks = [
-                    {"x": lm.x, "y": lm.y, "z": lm.z, "v": lm.visibility}
-                    for lm in results.pose_landmarks.landmark
-                ]
-                all_frames.append(landmarks)
+                landmarks = [{"id": i, "x": float(l.x), "y": float(l.y), "z": float(l.z)} 
+                             for i, l in enumerate(results.pose_landmarks.landmark)]
+                all_frames_data.append({"frame": frame_idx, "landmarks": landmarks})
+
+            frame_idx += 1
 
         cap.release()
-
-        # Ensure output folder exists
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, 'w') as f:
-            json.dump(all_frames, f)
-
-        return {"frames_processed": len(all_frames), "saved_to": output_path}
+        os.makedirs(os.path.dirname(output_json_path), exist_ok=True)
+        with open(output_json_path, 'w') as f:
+            json.dump(all_frames_data, f)
+        return True
