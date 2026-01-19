@@ -1,0 +1,169 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Pose Viewer — AI Dance Learning (skeleton)</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; padding: 18px; }
+    #controls { margin-top: 12px; display:flex; gap:8px; align-items:center; }
+    button { padding:6px 10px; }
+    #canvasWrap { border:1px solid #ddd; width: 720px; height: 540px; display:flex; align-items:center; justify-content:center; background:#fafafa; }
+    canvas { background: #111; max-width:100%; height:auto; }
+    #info { margin-left: 12px; font-size:0.95rem; color:#333; }
+    input[type=range] { width:420px; }
+    .muted { color:#666; font-size:0.9rem; }
+    #downloadLink { margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Pose Viewer — AI Dance Learning (skeleton)</h1>
+  <p class="muted">This viewer loads <code>/api/v1/pose/sample</code>. Skeleton lines + keypoints are drawn. Controls: play / pause / step / slider / speed.</p>
+
+  <div id="canvasWrap">
+    <canvas id="cv" width="640" height="480"></canvas>
+    <div id="info">
+      <div>Frame: <span id="frameIdx">0</span> / <span id="frameCount">0</span></div>
+      <div>Points per frame: <span id="pointsCount">0</span></div>
+      <div id="status" class="muted">loading...</div>
+      <a id="downloadLink" href="/api/v1/pose/sample" download="sample_pose.json">Download JSON</a>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button id="btnPrev">&lt; Prev</button>
+    <button id="btnPlay">Play ▶</button>
+    <button id="btnNext">Next &gt;</button>
+    <input id="frameSlider" type="range" min="0" max="0" value="0" />
+    <label style="margin-left:4px">Speed:</label>
+    <select id="speed">
+      <option value="1">1x</option>
+      <option value="0.5">0.5x</option>
+      <option value="0.25">0.25x</option>
+    </select>
+  </div>
+
+  <script>
+    (async function() {
+      const cv = document.getElementById('cv');
+      const ctx = cv.getContext('2d');
+      const frameIdxEl = document.getElementById('frameIdx');
+      const frameCountEl = document.getElementById('frameCount');
+      const pointsCountEl = document.getElementById('pointsCount');
+      const statusEl = document.getElementById('status');
+      const slider = document.getElementById('frameSlider');
+      const btnPlay = document.getElementById('btnPlay');
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      const speedSel = document.getElementById('speed');
+
+      // Standard MediaPipe Pose connectivity (pairs of landmark indices).
+      const CONNECTIONS = [
+        [0,1],[0,2],[1,3],[2,4],[0,5],[0,6],
+        [5,7],[7,9],[6,8],[8,10],[5,6],
+        [11,12],[11,13],[13,15],[12,14],[14,16],
+        [15,17],[16,18],[17,19],[18,20],[19,21],[20,22],
+        [11,23],[12,24],[23,24],[23,25],[24,26],[25,27],[26,28],
+        [27,29],[28,30],[29,31],[30,32]
+      ];
+
+      let frames = [];
+      let index = 0;
+      let playing = false;
+      let timer = null;
+
+      function drawFrame(i) {
+        ctx.clearRect(0,0,cv.width,cv.height);
+        const f = frames[i];
+        if(!f) return;
+        const pts = f.landmarks || [];
+
+        // draw skeleton lines first
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(0,180,255,0.8)';
+        CONNECTIONS.forEach(pair => {
+          const a = pts[pair[0]];
+          const b = pts[pair[1]];
+          if (a && b) {
+            const ax = (a.x || 0) * cv.width;
+            const ay = (a.y || 0) * cv.height;
+            const bx = (b.x || 0) * cv.width;
+            const by = (b.y || 0) * cv.height;
+            ctx.beginPath();
+            ctx.moveTo(ax, ay);
+            ctx.lineTo(bx, by);
+            ctx.stroke();
+          }
+        });
+
+        // draw each point on top
+        pts.forEach(p => {
+          const x = (p.x || 0) * cv.width;
+          const y = (p.y || 0) * cv.height;
+          ctx.beginPath();
+          ctx.fillStyle = 'rgba(0,255,150,0.95)';
+          ctx.arc(x, y, 5, 0, Math.PI*2);
+          ctx.fill();
+        });
+
+        // overlay text
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.font = '14px Arial';
+        ctx.fillText('frame ' + i, 8, 18);
+      }
+
+      function updateUI() {
+        frameIdxEl.textContent = index;
+        frameCountEl.textContent = frames.length ? (frames.length-1) : 0;
+        pointsCountEl.textContent = (frames[index] && frames[index].landmarks) ? frames[index].landmarks.length : 0;
+        slider.max = Math.max(0, frames.length - 1);
+        slider.value = index;
+      }
+
+      function startPlay() {
+        if (playing) return;
+        playing = true;
+        btnPlay.textContent = 'Pause ❚❚';
+        const baseDelay = 1000/15;
+        const speed = parseFloat(speedSel.value) || 1;
+        timer = setInterval(() => {
+          index = Math.min(frames.length-1, index + 1);
+          drawFrame(index);
+          updateUI();
+          if (index >= frames.length-1) stopPlay();
+        }, baseDelay / speed);
+      }
+
+      function stopPlay() {
+        playing = false;
+        btnPlay.textContent = 'Play ▶';
+        if (timer) { clearInterval(timer); timer = null; }
+      }
+
+      // controls
+      btnPlay.addEventListener('click', () => { if (playing) stopPlay(); else startPlay(); });
+      btnPrev.addEventListener('click', () => { stopPlay(); index = Math.max(0, index - 1); drawFrame(index); updateUI(); });
+      btnNext.addEventListener('click', () => { stopPlay(); index = Math.min(frames.length - 1, index + 1); drawFrame(index); updateUI(); });
+      slider.addEventListener('input', (e) => { stopPlay(); index = Math.min(frames.length - 1, parseInt(e.target.value)); drawFrame(index); updateUI(); });
+
+      // fetch JSON
+      try {
+        statusEl.textContent = 'fetching pose JSON...';
+        const res = await fetch('/api/v1/pose/sample');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        frames = await res.json();
+        if (!Array.isArray(frames)) {
+          if (frames.frames && Array.isArray(frames.frames)) frames = frames.frames;
+        }
+        if (!Array.isArray(frames)) throw new Error('Unexpected JSON format');
+        statusEl.textContent = 'loaded pose frames: ' + frames.length;
+        index = 0;
+        drawFrame(0);
+        updateUI();
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'Error loading pose JSON: ' + err.message;
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,19 +1,15 @@
+# main.py
+# FastAPI application entrypoint (minimal, runnable).
+# Keeps logic intentionally tiny so you can verify the site/server quickly.
+
 from fastapi import FastAPI
-from app.services.pose_extractor import PoseExtractor
-import os
+from fastapi.staticfiles import StaticFiles
+from backend.app.api.v1 import endpoints as endpoints_mod
 
-app = FastAPI()
-extractor = PoseExtractor()
+app = FastAPI(title="ai-dance-learning backend - minimal")
 
-@app.get("/")
-def home():
-    return {"status": "AI Dance Backend is Running"}
+# Include API router (v1)
+app.include_router(endpoints_mod.router, prefix="/api/v1")
 
-@app.get("/test-process")
-def test_process():
-    # Adjusted paths to match your root structure
-    video_path = "../samples/sample_video.mp4"
-    output_path = "data/pose_json/sample_pose_json.json"
-    
-    result = extractor.extract_from_video(video_path, output_path)
-    return result
+# Serve static files (backend/static/index.html will be served at /)
+app.mount("/", StaticFiles(directory="backend/static", html=True), name="static")
