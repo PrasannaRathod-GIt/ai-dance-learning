@@ -93,3 +93,4 @@ Unity Personal License
 3.Animation runs locally for smooth UX
 4.Pose smoothing applied to reduce jitter
 5.Focus on visual correctness, not biomechanical perfection
+- working on Demo for starting
