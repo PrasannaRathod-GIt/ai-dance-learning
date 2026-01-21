@@ -97,5 +97,5 @@ Unity Personal License
 
 - ## 👩‍💻 Author
 
--Prasanna Rathod (student)
+-Prasanna Rathod (student) persuing bachelore's degree
 Built as a learning-focused and portfolio-ready project.
