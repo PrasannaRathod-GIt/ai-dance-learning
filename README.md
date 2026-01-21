@@ -1,4 +1,4 @@
-# AI Dance Learning
+# AI Dance Learning/ with mediapipe backend
 
 Design and build a web-based application that helps users learn dance step-by-step by converting a real dance video
 into a structured tutorial using AI-driven pose analysis and a 3D humanoid animation. The system prioritizes smooth 
