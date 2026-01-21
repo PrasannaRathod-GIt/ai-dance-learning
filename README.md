@@ -94,3 +94,8 @@ Unity Personal License
 4.Pose smoothing applied to reduce jitter
 5.Focus on visual correctness, not biomechanical perfection
 - working on Demo for starting
+
+- ## 👩‍💻 Author
+
+-Prasanna Rathod (student)
+Built as a learning-focused and portfolio-ready project.
