@@ -3,7 +3,8 @@ using UnityEngine.UI;
 
 public class UIController : MonoBehaviour
 {
-    public PosePlayback animatorController; // References the playback script
+    public PosePlayback_TEMP animatorController;
+
     public PoseImporter importer;
 
     public Button playPauseButton;

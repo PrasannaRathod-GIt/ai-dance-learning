@@ -2,7 +2,8 @@ using UnityEngine;
 using System.Collections;
 
 [RequireComponent(typeof(Animator))]
-public class PosePlayback : MonoBehaviour
+public class PosePlayback_TEMP : MonoBehaviour
+
 {
     [Header("Settings")]
     public float delay = 0.05f;
