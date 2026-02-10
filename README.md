@@ -4,7 +4,7 @@ Design and build a web-based application that helps users learn dance step-by-st
 into a structured tutorial using AI-driven pose analysis and a 3D humanoid animation. The system prioritizes smooth 
 performance, clarity of movement, and explainable AI over perfect choreography replication.
 
-🧩 Core Features
+🧩 Core Features -
 
 1.Video Input
 
@@ -97,5 +97,5 @@ Unity Personal License
 
 - ## 👩‍💻 Author
 
--Prasanna Rathod (student) persuing bachelore's degree
+-Prasanna Rathod (student) pursuing bachelore's degree
 Built as a learning-focused and portfolio-ready project.
