@@ -97,6 +97,6 @@ Unity Personal License
 
 - ## 👩‍💻 Author 
 
--Prasanna Ravindra Rathod (student) pursuing bachelore's degree
-Built as a learning-focused and portfolio-ready project.
+-Prasanna Ravindra Rathod (Computer science graduate 2026).
+
 
